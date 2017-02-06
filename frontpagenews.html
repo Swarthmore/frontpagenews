@@ -1,0 +1,161 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Newspaper Front Pages</title>
+  <meta name="description" content="Front Pages of Newspapers from the Newseum">
+
+	<style>
+		#footer{
+			position:fixed;
+			height:50px;
+			background-color:red;
+			bottom:0px;
+			left:0px;
+			right:0px;
+			margin-bottom:0px;
+			font-size: xx-large;
+			font-family: Verdana, Geneva, sans-serif;
+			text-align:center;
+			padding-top:12px;
+		}
+
+		body{
+			margin-bottom:50px;
+		}
+	</style>
+
+  <!--[if lt IE 9]>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
+  <![endif]-->
+</head>
+
+<body>
+	<script src="./load-image.all.min.js"></script>
+
+	<div id="frontpage_image" style="text-align:center"></div>
+	<div id="footer"></div>
+
+	<script>
+
+
+		var page_delay = 10000;
+		var index = 0;
+		var scrollInterval;
+		var scrollPosition = 0;
+		var scrollSteps = 1000.0;
+		var topPageTime = 2000;
+		var bottomPageTime = 1000;
+		var frontpages = [];
+	
+	
+		function cbfunc(data) {
+			console.log(data);
+			for (var i=1; i<data.query.results.div.length; i++) {
+				//var url = data.query.results.div[i].p.a.img;
+				var frontpage = {
+					url: data.query.results.div[i].p.a.img.src.replace("/med/","/lg/"),
+					title: data.query.results.div[i].h4.a.title,
+					location: data.query.results.div[i].div.p.title
+				}
+				frontpages.push(frontpage);
+			}
+			console.log(frontpages);
+			loop();
+			setInterval(loop, page_delay);
+		}
+	
+	
+	
+	function loop() {
+		
+		// Stop scrolling for new image
+		if (typeof scrollInterval != 'undefined') {
+			clearInterval(scrollInterval);	
+		}
+		
+		document.getElementById('frontpage_image').innerHTML="";
+		//unfade(document.getElementById('frontpage_image'));
+		window.scrollTo(0,0);
+		
+		var imageHeight = 0;
+		
+		loadImage(
+			frontpages[index].url,
+			function (img) {
+				document.getElementById('frontpage_image').appendChild(img);
+				imageHeight = img.height;
+				},
+				{maxWidth: 1024, cover:true} // Options
+			);
+			
+			document.getElementById("footer").innerHTML = frontpages[index].title + "&nbsp;-&nbsp;" + frontpages[index].location;
+			unfade(document.getElementById('frontpage_image'));
+			//document.getElementById('frontpage_image').style.opacity=1;
+			//document.getElementById('frontpage_image').style.display = 'block';
+			window.scrollTo(0,0);
+			
+			scrollPosition = 0;
+			
+			setTimeout(function() {			
+				scrollInterval = setInterval(function() {
+					scrollPosition += (imageHeight-window.innerHeight)/scrollSteps;
+					window.scrollTo(0,scrollPosition);
+					},
+					(page_delay - topPageTime - bottomPageTime) / scrollSteps
+				);
+			}, topPageTime);
+			
+			
+			// Set fade timeout
+			setTimeout(function () { 
+				fade(document.getElementById('frontpage_image'));
+				}, (page_delay-500)
+			);
+			
+			
+			index = (index+1) % frontpages.length;
+			
+	};	
+	
+	
+
+	function fade(element) {
+		var op = 1;  // initial opacity
+		var timer = setInterval(function () {
+			if (op <= 0.1){
+				clearInterval(timer);
+				element.style.display = 'none';
+			}
+			element.style.opacity = op;
+			element.style.filter = 'alpha(opacity=' + op * 100 + ")";
+			op -= op * 0.1;
+    }, 15);
+	}
+	
+	
+	
+	
+	function unfade(element) {
+		var op = 0.1;  // initial opacity
+		element.style.display = 'block';
+		var timer = setInterval(function () {
+			if (op >= 1){
+				clearInterval(timer);
+			}
+			element.style.opacity = op;
+			element.style.filter = 'alpha(opacity=' + op * 100 + ")";
+			op += op * 0.1;
+		}, 20);
+	}
+
+
+	
+
+
+	</script>
+	<script src="https://query.yahooapis.com/v1/public/yql/aruetheswat/Newseum2?format=json&callback=cbfunc"></script>
+</body>
+</html>
