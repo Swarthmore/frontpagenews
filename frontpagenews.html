@@ -79,14 +79,18 @@
 		document.head.appendChild(s);
 
 
+		// Settings
 
-
-
-		var page_delay = 20000;
+		var page_delay = 30000; // default
+		if (typeof QueryString.pagedelay != 'undefined') {
+			page_delay = parseInt(QueryString.pagedelay)*1000;
+		}
+		page_delay = Math.max(page_delay, 2000);
+		
 		var index = 0;
 		var scrollInterval;
 		var scrollPosition = 0;
-		var scrollSteps = 1000.0;
+		var scrollSteps = 2000.0;
 		var topPageTime = 2000;
 		var bottomPageTime = 1000;
 		var frontpages = [];
