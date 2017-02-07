@@ -40,8 +40,49 @@
 
 	<script>
 
+		// Get region (if present)
+		// Possible choices: USA, international, North%20America, Africa, Europe, South%20America, Oceania, Asia, Middle%20East, Caribbean
+	
+		var QueryString = function () {
+		  // This function is anonymous, is executed immediately and 
+		  // the return value is assigned to QueryString!
+		  var query_string = {};
+		  var query = window.location.search.substring(1);
+		  var vars = query.split("&");
+		  for (var i=0;i<vars.length;i++) {
+			var pair = vars[i].split("=");
+				// If first entry with this name
+			if (typeof query_string[pair[0]] === "undefined") {
+			  query_string[pair[0]] = decodeURIComponent(pair[1]);
+				// If second entry with this name
+			} else if (typeof query_string[pair[0]] === "string") {
+			  var arr = [ query_string[pair[0]],decodeURIComponent(pair[1]) ];
+			  query_string[pair[0]] = arr;
+				// If third or later entry with this name
+			} else {
+			  query_string[pair[0]].push(decodeURIComponent(pair[1]));
+			}
+		  } 
+		  return query_string;
+		}();
 
-		var page_delay = 10000;
+
+		var tfp_query = "";
+		if (typeof QueryString.region != 'undefined') {
+			tfp_query = "tfp_region=" + QueryString.region;
+		}
+
+		// Load paper links from YQL query
+		var s = document.createElement("script");
+		s.type = "text/javascript";
+		s.src = "http://query.yahooapis.com/v1/public/yql?q=select%20h4.a.title%2C%20p.a.img.src%2C%20div.p%20from%20html%20where%20url%3D%22http%3A%2F%2Fwww.newseum.org%2Ftodaysfrontpages%2F%3F" + tfp_query + "%22%20%20and%20xpath%3D%22%2F%2Fdiv%5Bcontains(%40class%2C'thumbnail-group-item')%5D%22&format=json&callback=cbfunc";
+		document.head.appendChild(s);
+
+
+
+
+
+		var page_delay = 20000;
 		var index = 0;
 		var scrollInterval;
 		var scrollPosition = 0;
@@ -152,10 +193,9 @@
 	}
 
 
-	
 
 
 	</script>
-	<script src="https://query.yahooapis.com/v1/public/yql/aruetheswat/Newseum2?format=json&callback=cbfunc"></script>
+	<!--<script src="https://query.yahooapis.com/v1/public/yql/aruetheswat/Newseum2?format=json&callback=cbfunc"></script>-->
 </body>
 </html>
