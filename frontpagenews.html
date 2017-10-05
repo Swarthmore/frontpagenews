@@ -26,26 +26,181 @@
 			margin-bottom:50px;
 			scroll-behavior: smooth;
 		}
+		
+		
+		.fadeIn {
+    		opacity: 1;
+    		transition: opacity 5s linear;
+		}
+	
+		.fadeOut {
+    		opacity: 0;
+    		transition: opacity 0.5s linear;
+		}
+		
 	</style>
 
-  <!--[if lt IE 9]>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
-  <![endif]-->
+	<!--[if lt IE 9]>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
+	<![endif]-->
+
+
+	<!-- Can use optional query parameters:
+		region: USA, international, North%20America, Africa, Europe, South%20America, Oceania, Asia, Middle%20East, Caribbean
+		pagedelay: time (in seconds) to display each image 
+		random: 1 or 0
+	-->
+
 </head>
 
+
+
+
 <body>
-	<script src="./load-image.all.min.js"></script>
+	<script src="./load-image.all.min.js"></script> <!-- From https://github.com/blueimp/JavaScript-Load-Image -->
 
 	<div id="frontpage_image" style="text-align:center"></div>
 	<div id="footer"></div>
 
 	<script>
+	
+		// Settings
+		var index = 0;
+		var scrollInterval;
+		var scrollPosition = 0;
+		var topPageTime = 2000;
+		var frontpages = [];
+		var page_delay = 30000; // default
+		var imageHeight = 0;
+
+
+		window.scrollTo(0,0);
+
+		// Get query parameters from URL
+		var QueryString = getQueryParameters() 
+
+		// Get pagedelay (if present).  Require min of 2 seconds
+		if (typeof QueryString.pagedelay != 'undefined') {
+			page_delay = parseInt(QueryString.pagedelay)*1000;
+		}
+		page_delay = Math.max(page_delay, 2000);
 
 		// Get region (if present)
 		// Possible choices: USA, international, North%20America, Africa, Europe, South%20America, Oceania, Asia, Middle%20East, Caribbean
+		var tfp_query = "";
+		if (typeof QueryString.region != 'undefined') {
+			tfp_query = "tfp_region=" + encodeURI(QueryString.region);
+			tfp_query = tfp_query.replace("%", "%25");
+		}
+
+
+		// Check if random
+		var randomize = 0;
+		if (typeof QueryString.random != 'undefined') {
+			randomize = parseInt(QueryString.random) == 1 ? 1 : 0;
+		}
+
+
+
+		// Load paper links from YQL query
+		var s = document.createElement("script");
+		s.type = "text/javascript";
+		s.src = "http://query.yahooapis.com/v1/public/yql?q=select%2A%20from%20htmlstring%20where%20url%3D%22http%3A%2F%2Fwww.newseum.org%2Ftodaysfrontpages%2F%3F" + tfp_query + "%26tfp_show%3Dall%22%20%20and%20xpath%3D%22%2F%2Fdiv%5Bcontains(%40class%2C'thumbnail-group-item')%5D%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=cbfunc";
+		document.head.appendChild(s);
+
+		// Callback function to execute once YQL query returns
+		function cbfunc(data) {
+			// Insert HTML string containing newspaper data into fragment.  Then loop through each 	thumbnail-group-item, pulling out 
+			// the image url, title, and geographic location.		
+			
+			var fragment = document.createRange().createContextualFragment(data.query.results.result);
+			var thumbnails = fragment.querySelectorAll("div.thumbnail-group-item");
+			for (var i=1; i<thumbnails.length; i++) {
+				//var url = data.query.results.div[i].p.a.img;
+				var frontpage = {
+					url: thumbnails[i].querySelector("p a img").getAttribute("src").replace("/med/","/lg/"),
+					title: thumbnails[i].querySelector("h4 a").getAttribute("title"),
+					location: thumbnails[i].querySelector("div.thumbnail-group-body p").getAttribute("title")
+				}
+				frontpages.push(frontpage);
+			}
+			
+			if (randomize) {
+				frontpages.sort(function(a, b){return 0.5 - Math.random()});
+			}
+			
+			console.log("Found " + frontpages.length + " newspapers");
+			loadPaper();
+		}
 	
-		var QueryString = function () {
-		  // This function is anonymous, is executed immediately and 
+	
+	// Main program loop
+	function loadPaper() {
+			
+		// Use the JavaScript Load Image library to load an image of the front page.  After loading the image, 
+		// add it to the frontpage_image div
+		var starttime = 0;
+		
+		loadImage(
+			frontpages[index].url,
+			
+			function (img) {
+				
+				// Clear content of main div and replace with image
+				// https://stackoverflow.com/a/22966637
+				var node = document.getElementById("frontpage_image");
+				node.innerHTML = "";
+				
+				imageHeight = 0;
+		
+		
+				// Update the footer	
+				document.getElementById("footer").innerHTML = frontpages[index].title + "&nbsp;-&nbsp;" + frontpages[index].location;	
+
+				// Update the image
+				node.appendChild(img);
+				
+				document.body.className = "fadeIn";
+				imageHeight = img.height;
+				window.scrollTo(0,0);
+				
+				
+				// Wait topPageTime and then start scrolling
+				setTimeout(function() {	
+				
+					starttime = Date.now();		// Record initial time
+					
+					// Loop to set scroll location						
+					scrollInterval = setInterval(function() {	
+						// When time is up, stop the scrolling interval, fade out, and call next page load (after fade delay)
+						if ((Date.now() - starttime) >= page_delay) {
+							clearInterval(scrollInterval);	
+							document.body.className = "fadeOut";
+							// Set for next image.
+							index = (index+1) % frontpages.length;
+							setTimeout(loadPaper, 500);
+						} else {		
+							// Calculate next scroll position based on a time and image height
+							scrollPosition = ((Date.now() - starttime)/(page_delay - topPageTime)) * (imageHeight-window.innerHeight);
+							window.scrollTo(0,scrollPosition);
+						}
+					}, 20 );
+
+				}, topPageTime);
+					
+			},
+			{maxWidth: 1024, cover:true} // Options
+		);
+			
+
+
+			
+	};	
+	
+	
+
+	function getQueryParameters() {
+		 // This function is anonymous, is executed immediately and 
 		  // the return value is assigned to QueryString!
 		  var query_string = {};
 		  var query = window.location.search.substring(1);
@@ -65,146 +220,12 @@
 			}
 		  } 
 		  return query_string;
-		}();
-
-
-		var tfp_query = "";
-		if (typeof QueryString.region != 'undefined') {
-			tfp_query = "tfp_region=" + encodeURI(QueryString.region);
-			tfp_query = tfp_query.replace("%", "%25");
-		}
-
-		// Load paper links from YQL query
-		var s = document.createElement("script");
-		s.type = "text/javascript";
-		
-		s.src = "http://query.yahooapis.com/v1/public/yql?q=select%2A%20from%20htmlstring%20where%20url%3D%22http%3A%2F%2Fwww.newseum.org%2Ftodaysfrontpages%2F%3F" + tfp_query + "%26tfp_show%3Dall%22%20%20and%20xpath%3D%22%2F%2Fdiv%5Bcontains(%40class%2C'thumbnail-group-item')%5D%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=cbfunc";
-		document.head.appendChild(s);
-
-		// Settings
-
-		var page_delay = 30000; // default
-		if (typeof QueryString.pagedelay != 'undefined') {
-			page_delay = parseInt(QueryString.pagedelay)*1000;
-		}
-		page_delay = Math.max(page_delay, 2000);
-		
-		var index = 0;
-		var scrollInterval;
-		var scrollPosition = 0;
-		var scrollSteps = 2000.0;
-		var topPageTime = 2000;
-		var bottomPageTime = 1000;
-		var frontpages = [];
-	
-	
-		function cbfunc(data) {
-			console.log(data);
-			
-			var fragment = document.createRange().createContextualFragment(data.query.results.result);
-			var thumbnails = fragment.querySelectorAll("div.thumbnail-group-item");
-			for (var i=1; i<thumbnails.length; i++) {
-				//var url = data.query.results.div[i].p.a.img;
-				var frontpage = {
-					url: thumbnails[i].querySelector("p a img").getAttribute("src").replace("/med/","/lg/"),
-					title: thumbnails[i].querySelector("h4 a").getAttribute("title"),
-					location: thumbnails[i].querySelector("div.thumbnail-group-body p").getAttribute("title")
-				}
-				frontpages.push(frontpage);
-			}
-			console.log(frontpages);
-			loop();
-			setInterval(loop, page_delay);
-		}
-	
-	
-	
-	function loop() {
-		
-		// Stop scrolling for new image
-		if (typeof scrollInterval != 'undefined') {
-			clearInterval(scrollInterval);	
-		}
-		
-		document.getElementById('frontpage_image').innerHTML="";
-		//unfade(document.getElementById('frontpage_image'));
-		window.scrollTo(0,0);
-		
-		var imageHeight = 0;
-		
-		loadImage(
-			frontpages[index].url,
-			function (img) {
-				document.getElementById('frontpage_image').appendChild(img);
-				imageHeight = img.height;
-				},
-				{maxWidth: 1024, cover:true} // Options
-			);
-			
-			document.getElementById("footer").innerHTML = frontpages[index].title + "&nbsp;-&nbsp;" + frontpages[index].location;
-			unfade(document.getElementById('frontpage_image'));
-			//document.getElementById('frontpage_image').style.opacity=1;
-			//document.getElementById('frontpage_image').style.display = 'block';
-			window.scrollTo(0,0);
-			
-			scrollPosition = 0;
-			
-			setTimeout(function() {			
-				scrollInterval = setInterval(function() {
-					scrollPosition += (imageHeight-window.innerHeight)/scrollSteps;
-					window.scrollTo(0,scrollPosition);
-					},
-					(page_delay - topPageTime - bottomPageTime) / scrollSteps
-				);
-			}, topPageTime);
-			
-			
-			// Set fade timeout
-			setTimeout(function () { 
-				fade(document.getElementById('frontpage_image'));
-				}, (page_delay-500)
-			);
-			
-			
-			index = (index+1) % frontpages.length;
-			
-	};	
-	
-	
-
-	function fade(element) {
-		var op = 1;  // initial opacity
-		var timer = setInterval(function () {
-			if (op <= 0.1){
-				clearInterval(timer);
-				element.style.display = 'none';
-			}
-			element.style.opacity = op;
-			element.style.filter = 'alpha(opacity=' + op * 100 + ")";
-			op -= op * 0.1;
-    }, 15);
 	}
-	
-	
-	
-	
-	function unfade(element) {
-		var op = 0.1;  // initial opacity
-		element.style.display = 'block';
-		var timer = setInterval(function () {
-			if (op >= 1){
-				clearInterval(timer);
-			}
-			element.style.opacity = op;
-			element.style.filter = 'alpha(opacity=' + op * 100 + ")";
-			op += op * 0.1;
-		}, 20);
-	}
-
 
 
 
 	</script>
-	<!--<script src="https://query.yahooapis.com/v1/public/yql/aruetheswat/Newseum2?format=json&callback=cbfunc"></script>-->
+
+
 </body>
 </html>
