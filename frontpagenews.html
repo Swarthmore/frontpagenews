@@ -113,12 +113,14 @@
 			// Insert HTML string containing newspaper data into fragment.  Then loop through each 	thumbnail-group-item, pulling out 
 			// the image url, title, and geographic location.		
 			
-			var fragment = document.createRange().createContextualFragment(data.query.results.result);
+			// Change src to data-src in newspaper html to avoid loading all the images
+			newspaperhtml = data.query.results.result.replace(/src\s*=/g, "data-src=");
+			var fragment = document.createRange().createContextualFragment(newspaperhtml);
 			var thumbnails = fragment.querySelectorAll("div.thumbnail-group-item");
 			for (var i=1; i<thumbnails.length; i++) {
 				//var url = data.query.results.div[i].p.a.img;
 				var frontpage = {
-					url: thumbnails[i].querySelector("p a img").getAttribute("src").replace("/med/","/lg/"),
+					url: thumbnails[i].querySelector("p a img").getAttribute("data-src").replace("/med/","/lg/"),
 					title: thumbnails[i].querySelector("h4 a").getAttribute("title"),
 					location: thumbnails[i].querySelector("div.thumbnail-group-body p").getAttribute("title")
 				}
