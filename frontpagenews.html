@@ -72,7 +72,6 @@
 		var page_delay = 30000; // default
 		var imageHeight = 0;
 
-
 		window.scrollTo(0,0);
 
 		// Get query parameters from URL
@@ -99,29 +98,33 @@
 			randomize = parseInt(QueryString.random) == 1 ? 1 : 0;
 		}
 
+        // Get publication data
+        var xmlhttp = new XMLHttpRequest();
+        var url = "./publications.json";
+
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                var myArr = JSON.parse(this.responseText);
+                cbfunc(myArr);
+            }
+        };
+        xmlhttp.open("GET", url, true);
+        xmlhttp.send();
 
 
-		// Load paper links from YQL query
-		var s = document.createElement("script");
-		s.type = "text/javascript";
-		s.src = "https://query.yahooapis.com/v1/public/yql?q=select%2A%20from%20htmlstring%20where%20url%3D%22http%3A%2F%2Fwww.newseum.org%2Ftodaysfrontpages%2F%3F" + tfp_query + "%26tfp_show%3Dall%22%20%20and%20xpath%3D%22%2F%2Fdiv%5Bcontains(%40class%2C'thumbnail-group-item')%5D%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=cbfunc";
-		document.head.appendChild(s);
-
+	
 		// Callback function to execute once YQL query returns
-		function cbfunc(data) {
+		function cbfunc(publications) {
 			// Insert HTML string containing newspaper data into fragment.  Then loop through each 	thumbnail-group-item, pulling out 
 			// the image url, title, and geographic location.		
 			
 			// Change src to data-src in newspaper html to avoid loading all the images
-			newspaperhtml = data.query.results.result.replace(/src\s*=/g, "data-src=");
-			var fragment = document.createRange().createContextualFragment(newspaperhtml);
-			var thumbnails = fragment.querySelectorAll("div.thumbnail-group-item");
-			for (var i=1; i<thumbnails.length; i++) {
+			for (var i=1; i<publications.length; i++) {
 				//var url = data.query.results.div[i].p.a.img;
 				var frontpage = {
-					url: thumbnails[i].querySelector("p a img").getAttribute("data-src").replace("/med/","/lg/"),
-					title: thumbnails[i].querySelector("h4 a").getAttribute("title"),
-					location: thumbnails[i].querySelector("div.thumbnail-group-body p").getAttribute("title")
+					url: publications[i].thumbnailUrl,
+					title: publications[i].name,
+					location: publications[i].countries.join()
 				}
 				frontpages.push(frontpage);
 			}
