@@ -6,19 +6,21 @@
 
   <title>Newspaper Front Pages</title>
   <meta name="description" content="Front Pages of Newspapers from the Newseum">
-
+  <link href="https://fonts.googleapis.com/css?family=Roboto+Slab&display=swap" rel="stylesheet">
 	<style>
 		#footer{
 			position:fixed;
-			height:5vw;
-			background-color:red;
+			height:6vw;
+			background-color: white;
+            color:black;
+            border-top: 3px solid black;
 			bottom:0px;
 			left:0px;
 			right:0px;
 			margin-bottom:0px;
 			font-size: 4vw;
-			font-family: Verdana, Geneva, sans-serif;
 			text-align:center;
+            font-family: 'Roboto Slab', serif;
 		}
 
 		body{
@@ -48,7 +50,10 @@
 		region: USA, international, North%20America, Africa, Europe, South%20America, Oceania, Asia, Middle%20East, Caribbean
 		pagedelay: time (in seconds) to display each image 
 		random: 1 or 0
-	-->
+    -->
+
+    <!-- https://github.com/rikschennink/fitty -->
+    <script src="./fitty.min.js"></script>
 
 </head>
 
@@ -59,7 +64,7 @@
 	<script src="./load-image.all.min.js"></script> <!-- From https://github.com/blueimp/JavaScript-Load-Image -->
 
 	<div id="frontpage_image" style="text-align:center"></div>
-	<div id="footer"></div>
+	<div id="footer"><div id="publicationLabel"></div>
 
 	<script>
 	
@@ -74,6 +79,12 @@
 
 		window.scrollTo(0,0);
 
+        // Set up publication label text size fitting
+        fitty('#publicationLabel', {minSize:10,maxSize:68,multiLine:false});
+
+
+
+
 		// Get query parameters from URL
 		var QueryString = getQueryParameters() 
 
@@ -83,21 +94,30 @@
 		}
 		page_delay = Math.max(page_delay, 2000);
 
-		// Get region (if present)
-		// Possible choices: USA, international, North%20America, Africa, Europe, South%20America, Oceania, Asia, Middle%20East, Caribbean
-		var tfp_query = "";
-		if (typeof QueryString.region != 'undefined') {
-			tfp_query = "tfp_region=" + encodeURI(QueryString.region);
-			tfp_query = tfp_query.replace("%", "%25");
+        // Check publication type
+        var publicationType = null;
+        if (typeof QueryString.type != 'undefined') {
+			publicationType = QueryString.type;
+        }
+        
+        // Check publication country
+        var publicationCountry = null;
+        if (typeof QueryString.country != 'undefined') {
+			publicationCountry = QueryString.country;
+        }
+        
+        // Check publication language
+        var publicationLanguage = null;
+        if (typeof QueryString.lang != 'undefined') {
+			publicationLanguage = QueryString.lang;
 		}
-
 
 		// Check if random
 		var randomize = 0;
 		if (typeof QueryString.random != 'undefined') {
 			randomize = parseInt(QueryString.random) == 1 ? 1 : 0;
-		}
-
+        }
+        
         // Get publication data
         var xmlhttp = new XMLHttpRequest();
         var url = "./publications.json";
@@ -120,13 +140,23 @@
 			
 			// Change src to data-src in newspaper html to avoid loading all the images
 			for (var i=1; i<publications.length; i++) {
-				//var url = data.query.results.div[i].p.a.img;
-				var frontpage = {
-					url: publications[i].thumbnailUrl,
-					title: publications[i].name,
-					location: publications[i].countries.join()
-				}
-				frontpages.push(frontpage);
+                
+                // Skip if not matching publication type
+                if (publicationType && publicationType != publications[i].publicationType) {
+                    continue;
+                } else if (publicationCountry && !publications[i].countries.includes(publicationCountry)) {
+                    continue;
+                } else if (publicationLanguage && publications[i].languageIsoCode != publicationLanguage) {
+                    continue;
+                }
+
+                var frontpage = {
+                    url: publications[i].thumbnailUrl,
+                    title: publications[i].name,
+                    location: publications[i].countryNames.join()
+                }
+                frontpages.push(frontpage);
+
 			}
 			
 			if (randomize) {
@@ -148,7 +178,15 @@
 		loadImage(
 			frontpages[index].url,
 			
-			function (img) {
+			function (img, data) {
+
+                // If image load is an error, move to next paper
+                if (img.type === "error") {
+                    console.error("Error loading image " + imageUrl);
+                    index = (index+1) % frontpages.length;
+                    loadPaper();
+                    return;
+                }
 				
 				// Clear content of main div and replace with image
 				// https://stackoverflow.com/a/22966637
@@ -159,8 +197,8 @@
 		
 		
 				// Update the footer	
-				document.getElementById("footer").innerHTML = frontpages[index].title + "&nbsp;-&nbsp;" + frontpages[index].location;	
-
+                document.getElementById("publicationLabel").innerHTML = frontpages[index].title + "&nbsp;-&nbsp;" + frontpages[index].location;
+                
 				// Update the image
 				node.appendChild(img);
 				
@@ -225,6 +263,34 @@
 		  } 
 		  return query_string;
 	}
+
+
+    function FitText(el) {
+            this.element = el;
+            this.parent = el.parentElement;
+            this.clientHeight = -1;
+            this.clientWidth = -1;
+
+            this.fit = function (shouldRecalc) {
+                this.parent.style.fontSize = "100px";
+                if (shouldRecalc || this.clientWidth < 0) {
+                    this.recalc();
+                }
+
+                this.parent.style.fontSize =
+                    Math.max(10,
+                        Math.min(this.clientHeight,
+                            Math.floor(this.clientWidth / this.element.clientWidth * 100),
+                        )
+                    ) + 'px';
+            }
+
+            //cache parent width, height
+            this.recalc = function () {
+                this.clientWidth = this.parent.clientWidth;
+                this.clientHeight = this.parent.clientHeight;
+            }
+        };
 
 
 

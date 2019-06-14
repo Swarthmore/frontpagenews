@@ -33,15 +33,19 @@ request(options, function (error, response, body) {
             for (var c of p.countries) {
                 countryNames.push(countryList.getName(c));
             }
-           p.countries = countryNames;
+            p.countryNames = countryNames;
         }
 
         fs.writeFile("./publications.json", JSON.stringify(latest_publications), function (err) {
             if (err) {
-                return console.log(err);
+                console.log(err);
             } else {
                 console.log("The file was saved!");
             }
         }); 
+    } else {
+        console.log("Error getting PressReader API data");
+        console.warn(error);
+
     }
 })
