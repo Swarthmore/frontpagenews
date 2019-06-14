@@ -1,0 +1,22 @@
+{
+  "name": "frontpagenews",
+  "version": "0.2.0",
+  "description": "",
+  "main": "frontpagenews_node.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.swarthmore.edu:aruethe2/frontpagenews.git"
+  },
+  "keywords": [],
+  "author": "Andrew Ruether",
+  "license": "ISC",
+  "dependencies": {
+    "country-list": "^2.1.1",
+    "moment": "^2.24.0",
+    "request": "^2.88.0",
+    "underscore": "^1.9.1"
+  }
+}
