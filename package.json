@@ -4,7 +4,8 @@
   "description": "",
   "main": "frontpagenews_node.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node frontpagenews.js"
   },
   "repository": {
     "type": "git",
@@ -16,6 +17,8 @@
   "dependencies": {
     "country-list": "^2.1.1",
     "moment": "^2.24.0",
+    "node-cron": "^2.0.3",
+    "node-static": "^0.7.11",
     "request": "^2.88.0",
     "underscore": "^1.9.1"
   }

@@ -92,6 +92,8 @@
         // Set up publication label text size fitting
         fitty('#publicationLabel', {minSize:10,maxSize:28,multiLine:false});
 
+        // Reload the page each day at 6:30AM -- this gets the latest publication lists
+        refreshAt(6,30,0);
 
 
 
@@ -302,7 +304,23 @@
             }
         };
 
+   // Source: https://stackoverflow.com/a/1217945
+    function refreshAt(hours, minutes, seconds) {
+        var now = new Date();
+        var then = new Date();
 
+        if(now.getHours() > hours ||
+        (now.getHours() == hours && now.getMinutes() > minutes) ||
+            now.getHours() == hours && now.getMinutes() == minutes && now.getSeconds() >= seconds) {
+            then.setDate(now.getDate() + 1);
+        }
+        then.setHours(hours);
+        then.setMinutes(minutes);
+        then.setSeconds(seconds);
+
+        var timeout = (then.getTime() - now.getTime());
+        setTimeout(function() { window.location.reload(true); }, timeout);
+    }
 
 	</script>
 
