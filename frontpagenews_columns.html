@@ -11,18 +11,18 @@ body {margin:0;padding:0}
 
 <script>
 	
-	var baseurl = "./frontpagenews.html?random=1&region=";
+	var baseurl = "./frontpagenews.html?random=1&type=newspaper&country=";
 	
 	// Get query parameters from URL
 	var QueryString = getQueryParameters() 
 	// Get region (if present)
-	// Possible choices: USA, international, North%20America, Africa, Europe, South%20America, Oceania, Asia, Middle%20East, Caribbean
-	if (typeof QueryString.regions != 'undefined') {
-		regions = QueryString.regions.split(",");
+	// Possible choices: use 2 letter country code
+	if (typeof QueryString.countries != 'undefined') {
+		countries = QueryString.countries.split(",");
 		
-		regions.forEach(function(r) {
+		countries.forEach(function(r) {
   			var iframe = document.createElement('iframe');
-			iframe.style.width = (100.0/regions.length) + "%";
+			iframe.style.width = (100.0/countries.length) + "%";
 			iframe.src = baseurl + r;
 			document.body.appendChild(iframe);
 		});
