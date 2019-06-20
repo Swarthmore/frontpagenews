@@ -1,10 +1,10 @@
 {
   "name": "frontpagenews",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Display front pages of newspapers from around the world",
-  "main": "frontpagenews.js",
+  "main": "app.js",
   "scripts": {
-    "start": "node frontpagenews.js"
+    "start": "node app.js"
   },
   "repository": {
     "type": "git",
