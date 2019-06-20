@@ -1,13 +1,13 @@
-var static = require('node-static');
-var request = require('request');
-var moment = require('moment');
-var und = require('underscore');
-var fs = require('fs');
+const static = require('node-static');
+const request = require('request');
+const moment = require('moment');
+const und = require('underscore');
+const fs = require('fs');
 const countryList = require('country-list');
-var cron = require('node-cron');
+const cron = require('node-cron');
 
-var api_url = "https://api.pressreader.com/v1/publications/";
-var api_key = process.env.PRESSREADER_API_KEY
+const api_url = "https://api.pressreader.com/v1/publications/";
+const api_key = process.env.PRESSREADER_API_KEY
 
 
 var options = {
@@ -18,7 +18,7 @@ var options = {
 }
 
 // Load publications on startup
-loadPublications()
+
 
 // Set up static file server
 var file = new static.Server('./public');
@@ -38,7 +38,6 @@ cron.schedule('15 6 * * *', () => {
    console.log('Refreshing publication list');
    loadPublications();
 });
-
 
 
 

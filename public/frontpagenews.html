@@ -160,6 +160,8 @@
                     continue;
                 } else if (publicationLanguage && publications[i].languageIsoCode != publicationLanguage) {
                     continue;
+                } else if (!'imageUrl' in publications[i]) {
+                    continue;
                 }
 
                 var frontpage = {
@@ -194,7 +196,7 @@
 
                 // If image load is an error, move to next paper
                 if (img.type === "error") {
-                    console.error("Error loading image " + imageUrl);
+                    console.error("Error loading image: " + frontpages[index].url);
                     index = (index+1) % frontpages.length;
                     loadPaper();
                     return;
