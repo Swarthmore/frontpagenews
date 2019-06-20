@@ -18,7 +18,7 @@ var options = {
 }
 
 // Load publications on startup
-
+loadPublications();
 
 // Set up static file server
 var file = new static.Server('./public');
